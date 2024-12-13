@@ -47,6 +47,7 @@ struct udev_device {
 	struct udev_list prop_list;
 	struct udev_list sysattr_list;
 	struct udev_list tag_list;
+	struct udev_list current_tag_list;
 	struct udev_list devlink_list;
 	struct udev *udev;
 	struct udev_device *parent;
@@ -160,12 +161,27 @@ udev_device_get_tags_list(struct udev_device *ud)
 	return (&ud->tag_list);
 }
 
+struct udev_list *
+udev_device_get_current_tags_list(struct udev_device *ud)
+{
+
+	return (&ud->current_tag_list);
+}
+
 LIBUDEV_EXPORT struct udev_list_entry *
 udev_device_get_tags_list_entry(struct udev_device *ud)
 {
 
 	TRC("(%p(%s))", ud, ud->syspath);
 	return (udev_list_entry_get_first(udev_device_get_tags_list(ud)));
+}
+
+LIBUDEV_EXPORT struct udev_list_entry *
+udev_device_get_current_tags_list_entry(struct udev_device *ud)
+{
+
+	TRC("(%p(%s))", ud, ud->syspath);
+	return (udev_list_entry_get_first(udev_device_get_current_tags_list(ud)));
 }
 
 LIBUDEV_EXPORT int
@@ -175,6 +191,16 @@ udev_device_has_tag(struct udev_device *ud, const char *tag)
 
 	TRC("(%p, %s)", ud, tag);
 	ule = udev_list_entry_get_first(udev_device_get_tags_list(ud));
+	return (udev_list_entry_get_by_name(ule, tag) != NULL);
+}
+
+LIBUDEV_EXPORT int
+udev_device_has_current_tag(struct udev_device *ud, const char *tag)
+{
+	struct udev_list_entry *ule;
+
+	TRC("(%p, %s)", ud, tag);
+	ule = udev_list_entry_get_first(udev_device_get_current_tags_list(ud));
 	return (udev_list_entry_get_by_name(ule, tag) != NULL);
 }
 
@@ -276,6 +302,7 @@ udev_device_new_common(struct udev *udev, const char *syspath, int action)
 	udev_list_init(&ud->prop_list);
 	udev_list_init(&ud->sysattr_list);
 	udev_list_init(&ud->tag_list);
+	udev_list_init(&ud->current_tag_list);
 	udev_list_init(&ud->devlink_list);
 	if (action != UD_ACTION_REMOVE)
 		invoke_create_handler(ud);
@@ -338,6 +365,7 @@ udev_device_free(struct udev_device *ud)
 	udev_list_free(&ud->prop_list);
 	udev_list_free(&ud->sysattr_list);
 	udev_list_free(&ud->tag_list);
+	udev_list_free(&ud->current_tag_list);
 	udev_list_free(&ud->devlink_list);
 	if (!ud->flags.parent_ref && ud->parent != NULL)
 		udev_device_free(ud->parent);
